@@ -1,0 +1,66 @@
+Building for debugging...
+[0/7] /Users/runner/work/loki-mac/loki-mac/.build/x86_64-apple-macosx/debug/LokiKernPackageTests.derived/runner.swift
+[1/7] Write sources
+[4/7] Write swift-version-1977FEB4D2752686.txt
+[6/13] Emitting module LokiCore
+[7/13] Compiling LokiCore Router.swift
+[8/13] Compiling LokiCore Catalog.swift
+[9/13] Compiling LokiCore ContextEngine.swift
+[10/13] Compiling LokiCore Domain.swift
+[11/13] Compiling LokiCore Format.swift
+[12/14] Compiling LokiCore TaskClassifier.swift
+[13/16] Compiling LokiCoreTests LokiCoreTests.swift
+[14/16] Emitting module LokiCoreTests
+[15/18] Compiling LokiKernPackageTests runner.swift
+[16/18] Emitting module LokiKernPackageTests
+[16/18] Write Objects.LinkFileList
+[17/18] Linking LokiKernPackageTests
+Build complete! (38.29s)
+Test Suite 'All tests' started at 2026-11-17 11:45:16.136.
+Test Suite 'LokiKernPackageTests.xctest' started at 2026-11-17 11:45:16.139.
+Test Suite 'ClassifierTests' started at 2026-11-17 11:45:16.139.
+Test Case '-[LokiCoreTests.ClassifierTests testKinds]' started.
+Test Case '-[LokiCoreTests.ClassifierTests testKinds]' passed (0.545 seconds).
+Test Suite 'ClassifierTests' passed at 2026-11-17 11:45:16.685.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.545 (0.546) seconds
+Test Suite 'ContextEngineTests' started at 2026-11-17 11:45:16.685.
+Test Case '-[LokiCoreTests.ContextEngineTests testBudgetFromWindow]' started.
+Test Case '-[LokiCoreTests.ContextEngineTests testBudgetFromWindow]' passed (0.000 seconds).
+Test Case '-[LokiCoreTests.ContextEngineTests testKeepsRecentTurnsAndSummarizesOlder]' started.
+Test Case '-[LokiCoreTests.ContextEngineTests testKeepsRecentTurnsAndSummarizesOlder]' passed (0.003 seconds).
+Test Case '-[LokiCoreTests.ContextEngineTests testShortHistoryStaysVerbatim]' started.
+Test Case '-[LokiCoreTests.ContextEngineTests testShortHistoryStaysVerbatim]' passed (0.000 seconds).
+Test Suite 'ContextEngineTests' passed at 2026-11-17 11:45:16.689.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'FormatTests' started at 2026-11-17 11:45:16.689.
+Test Case '-[LokiCoreTests.FormatTests testFormats]' started.
+Test Case '-[LokiCoreTests.FormatTests testFormats]' passed (0.003 seconds).
+Test Suite 'FormatTests' passed at 2026-11-17 11:45:16.692.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'RouterTests' started at 2026-11-17 11:45:16.693.
+Test Case '-[LokiCoreTests.RouterTests testAutoExcludesModelsWithoutRequiredCapability]' started.
+Test Case '-[LokiCoreTests.RouterTests testAutoExcludesModelsWithoutRequiredCapability]' passed (0.001 seconds).
+Test Case '-[LokiCoreTests.RouterTests testAutoKeepsCurrentModelWithoutClearGain]' started.
+Test Case '-[LokiCoreTests.RouterTests testAutoKeepsCurrentModelWithoutClearGain]' passed (0.001 seconds).
+Test Case '-[LokiCoreTests.RouterTests testAutoSwitchesWhenClearlyBetter]' started.
+Test Case '-[LokiCoreTests.RouterTests testAutoSwitchesWhenClearlyBetter]' passed (0.001 seconds).
+Test Case '-[LokiCoreTests.RouterTests testEUBlockedLicenseIsExcluded]' started.
+Test Case '-[LokiCoreTests.RouterTests testEUBlockedLicenseIsExcluded]' passed (0.000 seconds).
+Test Case '-[LokiCoreTests.RouterTests testManualChoiceIsNeverOverridden]' started.
+Test Case '-[LokiCoreTests.RouterTests testManualChoiceIsNeverOverridden]' passed (0.001 seconds).
+Test Case '-[LokiCoreTests.RouterTests testManualModeGivesHintButKeepsModel]' started.
+Test Case '-[LokiCoreTests.RouterTests testManualModeGivesHintButKeepsModel]' passed (0.001 seconds).
+Test Case '-[LokiCoreTests.RouterTests testMemoryFilter]' started.
+Test Case '-[LokiCoreTests.RouterTests testMemoryFilter]' passed (0.001 seconds).
+Test Case '-[LokiCoreTests.RouterTests testUnavailableDriveIsExcluded]' started.
+Test Case '-[LokiCoreTests.RouterTests testUnavailableDriveIsExcluded]' passed (0.001 seconds).
+Test Suite 'RouterTests' passed at 2026-11-17 11:45:16.701.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.006 (0.008) seconds
+Test Suite 'LokiKernPackageTests.xctest' passed at 2026-11-17 11:45:16.701.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.557 (0.561) seconds
+Test Suite 'All tests' passed at 2026-11-17 11:45:16.701.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.557 (0.564) seconds
+◇ Test run started.
+↳ Testing Library Version: 1501
+↳ Target Platform: x86_64-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

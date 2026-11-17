@@ -1,0 +1,28 @@
+created: /Users/runner/work/loki-mac/loki-mac/dist/LOKI-0.1.0.dmg
+Checksumming Protective Master Boot Record (MBR : 0)…
+Protective Master Boot Record (MBR :: verified   CRC32 $27690C8D
+Checksumming GPT Header (Primary GPT Header : 1)…
+ GPT Header (Primary GPT Header : 1): verified   CRC32 $67CA9A11
+Checksumming GPT Partition Data (Primary GPT Table : 2)…
+GPT Partition Data (Primary GPT Tabl: verified   CRC32 $F5D7A301
+Checksumming  (Apple_Free : 3)…
+                    (Apple_Free : 3): verified   CRC32 $00000000
+Checksumming disk image (Apple_APFS : 4)…
+         disk image (Apple_APFS : 4): verified   CRC32 $BE379ADA
+Checksumming  (Apple_Free : 5)…
+                    (Apple_Free : 5): verified   CRC32 $00000000
+Checksumming GPT Partition Data (Backup GPT Table : 6)…
+GPT Partition Data (Backup GPT Table: verified   CRC32 $F5D7A301
+Checksumming GPT Header (Backup GPT Header : 7)…
+  GPT Header (Backup GPT Header : 7): verified   CRC32 $7F70C6D1
+verified   CRC32 $7905D866
+hdiutil: verify: checksum of "dist/LOKI-0.1.0.dmg" is VALID
+total 8
+drwxr-xr-x    5 runner  staff   160 Nov 17 12:01 .
+drwx------@ 131 runner  staff  4192 Nov 17 12:02 ..
+-rw-r--r--    1 runner  staff  1475 Nov 17 12:01 Installation – bitte lesen.txt
+drwxr-xr-x    3 runner  staff    96 Nov 17 12:01 LOKI.app
+lrwxr-xr-x    1 runner  staff    13 Nov 17 12:01 Programme -> /Applications
+arm64
+✓ dist/LOKI-0.1.0.dmg ( 12M)
+b7454dd70b007a57418d906dc87f11f3dd50acc8246c36b3b887e2cdf2975746  LOKI-0.1.0.dmg

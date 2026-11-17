@@ -1,0 +1,10 @@
+⚙️  Generating plists...
+⚙️  Generating project...
+⚙️  Writing project...
+Created project at /Users/runner/work/loki-mac/loki-mac/LOKI.xcodeproj
+▸ xcodebuild (Release, arm64)
+/Users/runner/work/loki-mac/loki-mac/Sources/LOKI/Services/StorageManager.swift:104:45: warning: instance method 'makeIterator' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode
+build/LOKI.app: replacing existing signature
+build/LOKI.app: valid on disk
+build/LOKI.app: satisfies its Designated Requirement
+✓ build/LOKI.app ( 46M)

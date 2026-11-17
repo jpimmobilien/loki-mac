@@ -1,0 +1,13 @@
+ProductName:		macOS
+ProductVersion:		15.7.9
+BuildVersion:		24G830
+x86_64
+Xcode 26.3
+Build version 17C529
+swift-driver version: 1.127.15 Apple Swift version 6.2.4 (swiftlang-6.2.4.1.4 clang-1700.6.4.2)
+Target: x86_64-apple-macosx15.0
+SDK: 26.2
+Intel(R) Core(TM) i7-8700B CPU @ 3.20GHz
+4
+15032385536
+/Users/runner/Library/Developer/DVTDownloads/MetalToolchain/mounts/058e1b31129b642e40598a87b55aa54b2a29e538/Metal.xctoolchain/usr/bin/metal
