@@ -1,8 +1,9 @@
-# LOKI für macOS – Kern-Tests, App-Build (Xcode, MLX), Vorschaubilder, Selbsttest mit echtem Modell, DMG
+# LOKI für macOS – Kern-Tests, App-Build (Xcode, MLX), DMG, danach Prüfung auf Apple Silicon
 #
-#   build    macOS 26 (Apple Silicon): LokiCore-Tests → XcodeGen → xcodebuild (arm64, ad-hoc signiert)
-#            → Vorschaubilder in Dunkel und Hell → Selbsttest (Katalog bei Hugging Face, echter Download mit dem
-#            App-Downloader, Laden mit MLX, zwei Chat-Antworten) → DMG mit Mount-Prüfung
+#   build    Kern-Tests (LokiCore) → XcodeGen → xcodebuild (arm64, ad-hoc signiert) → DMG mit Mount-Prüfung.
+#            Standard: Intel-Rechner mit Xcode 26 (verlässlich verfügbar); er übersetzt für Apple Silicon.
+#   qa       macOS 26 auf Apple Silicon: App aus der fertigen DMG installieren → Vorschaubilder in Dunkel und Hell
+#            → Selbsttest (Katalog bei Hugging Face, echter Download mit dem App-Downloader, MLX, zwei Chat-Antworten)
 #   results  Ergebnisse in den Zweig „ci-ergebnisse“ (DMG in Teilen, Bilder, Protokolle)
 name: Build
 
@@ -11,6 +12,12 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
+      build_runner:
+        description: "Rechner für den Build-Job"
+        required: false
+        default: macos-15-intel
+        type: choice
+        options: [macos-15-intel, macos-26, macos-15]
       qa_model:
         description: "Modell für den Selbsttest"
         required: false
@@ -29,8 +36,8 @@ env:
 
 jobs:
   build:
-    name: Tests, Build, Prüfung, DMG (macOS 26)
-    runs-on: macos-26
+    name: Tests, Build, DMG
+    runs-on: ${{ inputs.build_runner || 'macos-15-intel' }}
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +51,7 @@ jobs:
           if [ -n "$X" ]; then sudo xcode-select -s "$X"; fi
           {
             sw_vers; uname -m; xcodebuild -version; swift --version; echo "SDK: $(xcrun --show-sdk-version)"
-            sysctl -n machdep.cpu.brand_string; sysctl -n hw.memsize
+            sysctl -n machdep.cpu.brand_string; sysctl -n hw.ncpu; sysctl -n hw.memsize
           } 2>&1 | tee logs/werkzeuge.txt
           xcodebuild -downloadComponent MetalToolchain 2>&1 | tail -3 || true
           xcrun -f metal 2>&1 | tee -a logs/werkzeuge.txt || true
@@ -57,30 +64,13 @@ jobs:
           set -o pipefail
           swift test 2>&1 | tee logs/kern-tests.txt
 
-      - name: App bauen
+      - name: App bauen (Apple Silicon)
         env:
           VERSION: ${{ env.APP_VERSION }}
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
           set -o pipefail
           scripts/build.sh 2>&1 | tee logs/build.txt
-
-      - name: Vorschaubilder (Dunkel und Hell)
-        id: snapshots
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          scripts/run_qa.sh snapshot qa/vorschau 2>&1 | tee logs/vorschau.txt
-
-      - name: Selbsttest (Katalog, Download, MLX, Chat)
-        id: selftest
-        continue-on-error: true
-        timeout-minutes: 45
-        env:
-          QA_MODEL: ${{ inputs.qa_model || 'mlx-community/Qwen3-0.6B-4bit' }}
-        run: |
-          set -o pipefail
-          scripts/run_qa.sh selftest qa/selbsttest 2>&1 | tee logs/selbsttest.txt
 
       - name: DMG erstellen und prüfen
         env:
@@ -93,10 +83,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "== Ergebnisse =="
             echo "Kern-Tests: ${{ steps.tests.outcome }}"
-            echo "Vorschaubilder: ${{ steps.snapshots.outcome }}"
-            echo "Selbsttest: ${{ steps.selftest.outcome }}"
             echo "== lipo =="; lipo -info build/LOKI.app/Contents/MacOS/LOKI
             echo "== minos/sdk =="; otool -l build/LOKI.app/Contents/MacOS/LOKI | grep -A4 LC_BUILD_VERSION | head -8
             echo "== codesign =="; codesign -dvv build/LOKI.app 2>&1
@@ -113,27 +100,77 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: LOKI-ergebnisse
+          name: LOKI-build
           path: |
             dist/
             logs/
-            qa/
+          if-no-files-found: ignore
+
+  qa:
+    name: Prüfung auf Apple Silicon (macOS 26)
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: LOKI-build
+          path: geladen
+      - name: App aus der DMG installieren
+        run: |
+          mkdir -p qa build
+          sw_vers | tee qa/system.txt; uname -m | tee -a qa/system.txt
+          DMG=$(ls geladen/dist/LOKI-*.dmg | head -1)
+          (cd geladen/dist && shasum -a 256 -c "$(basename "$DMG").sha256")
+          MNT="$(mktemp -d)"
+          hdiutil attach "$DMG" -nobrowse -readonly -mountpoint "$MNT"
+          ditto "$MNT/LOKI.app" build/LOKI.app
+          hdiutil detach "$MNT"
+          codesign --verify --deep --strict --verbose=2 build/LOKI.app
+      - name: Vorschaubilder (Dunkel und Hell)
+        id: snapshots
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          scripts/run_qa.sh snapshot qa/vorschau 2>&1 | tee qa/vorschau-lauf.txt
+      - name: Selbsttest (Katalog, Download, MLX, Chat)
+        id: selftest
+        continue-on-error: true
+        timeout-minutes: 50
+        env:
+          QA_MODEL: ${{ inputs.qa_model || 'mlx-community/Qwen3-0.6B-4bit' }}
+        run: |
+          set -o pipefail
+          scripts/run_qa.sh selftest qa/selbsttest 2>&1 | tee qa/selbsttest-lauf.txt
+      - name: Zusammenfassung
+        if: always()
+        run: |
+          echo "Vorschaubilder: ${{ steps.snapshots.outcome }}" | tee qa/ergebnis.txt
+          echo "Selbsttest: ${{ steps.selftest.outcome }}" | tee -a qa/ergebnis.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LOKI-qa
+          path: qa/
           if-no-files-found: ignore
 
   results:
     name: Ergebnisse sichern
     if: always()
-    needs: [build]
+    needs: [build, qa]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
-          name: LOKI-ergebnisse
           path: ergebnisse
       - name: Bilder verkleinern, DMG teilen
         run: |
+          mkdir -p ergebnisse
           python3 -m pip install --quiet --user --break-system-packages pillow
           python3 - <<'PY'
           import pathlib
@@ -145,11 +182,10 @@ jobs:
               im.save(p.with_suffix(".jpg"), quality=86, optimize=True)
               p.unlink()
           PY
-          for f in ergebnisse/dist/*.dmg; do
-            [ -f "$f" ] || continue
+          find ergebnisse -name "*.dmg" | while read -r f; do
             (cd "$(dirname "$f")" && split -b 40m -d "$(basename "$f")" "$(basename "$f").teil-" && rm "$(basename "$f")")
           done
-          ls -laR ergebnisse | head -80
+          ls -laR ergebnisse | head -100
       - name: In Zweig „ci-ergebnisse“ schreiben
         env:
           GH_TOKEN: ${{ github.token }}
@@ -158,6 +194,7 @@ jobs:
           {
             echo "Lauf: ${GITHUB_RUN_NUMBER} (${GITHUB_SHA})"
             echo "build: ${{ needs.build.result }}"
+            echo "qa: ${{ needs.qa.result }}"
             date -u
           } > ERGEBNIS.txt
           git init -q -b ci-ergebnisse
