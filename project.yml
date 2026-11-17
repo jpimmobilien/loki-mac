@@ -10,12 +10,13 @@ options:
 packages:
   LokiKern:
     path: .
+  # Feste Versionen: ab mlx-swift 0.31.5 ist Swift 6.3 nötig; die Intel-Build-Rechner haben Xcode 26.3 (Swift 6.2).
   mlx-swift:
     url: https://github.com/ml-explore/mlx-swift
-    minorVersion: 0.32.3
+    exactVersion: 0.31.4
   mlx-swift-lm:
     url: https://github.com/ml-explore/mlx-swift-lm
-    from: 3.32.3
+    exactVersion: 3.31.4
   swift-transformers:
     url: https://github.com/huggingface/swift-transformers
     from: 1.3.0
