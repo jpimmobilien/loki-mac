@@ -1,0 +1,10 @@
+build/
+dist/
+.build/
+.swiftpm/
+LOKI.xcodeproj/
+qa/
+logs/
+DerivedData/
+*.xcuserstate
+.DS_Store

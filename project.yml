@@ -1,0 +1,63 @@
+# Xcode-Projekt (XcodeGen): `brew install xcodegen && xcodegen generate` → LOKI.xcodeproj
+#
+# Die App braucht xcodebuild (nicht `swift build`), weil MLX seine Metal-Shader nur so übersetzt.
+# Der modellunabhängige Kern (LokiCore) kommt aus dem lokalen Swift-Paket (Package.swift).
+name: LOKI
+options:
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  LokiKern:
+    path: .
+  mlx-swift:
+    url: https://github.com/ml-explore/mlx-swift
+    minorVersion: 0.32.3
+  mlx-swift-lm:
+    url: https://github.com/ml-explore/mlx-swift-lm
+    from: 3.32.3
+  swift-transformers:
+    url: https://github.com/huggingface/swift-transformers
+    from: 1.3.0
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+targets:
+  LOKI:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/LOKI
+      - path: Resources/AppIcon.icns
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: LOKI
+        PRODUCT_BUNDLE_IDENTIFIER: de.jpimmobilien.loki
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_FILE: Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: NO
+        ARCHS: arm64
+        ONLY_ACTIVE_ARCH: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        SWIFT_STRICT_CONCURRENCY: minimal
+        DEAD_CODE_STRIPPING: YES
+    dependencies:
+      - package: LokiKern
+        product: LokiCore
+      - package: mlx-swift
+        product: MLX
+      - package: mlx-swift-lm
+        product: MLXLLM
+      - package: mlx-swift-lm
+        product: MLXVLM
+      - package: mlx-swift-lm
+        product: MLXLMCommon
+      - package: swift-transformers
+        product: Tokenizers

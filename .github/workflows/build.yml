@@ -1,0 +1,168 @@
+# LOKI für macOS – Kern-Tests, App-Build (Xcode, MLX), Vorschaubilder, Selbsttest mit echtem Modell, DMG
+#
+#   build    macOS 26 (Apple Silicon): LokiCore-Tests → XcodeGen → xcodebuild (arm64, ad-hoc signiert)
+#            → Vorschaubilder in Dunkel und Hell → Selbsttest (Katalog bei Hugging Face, echter Download mit dem
+#            App-Downloader, Laden mit MLX, zwei Chat-Antworten) → DMG mit Mount-Prüfung
+#   results  Ergebnisse in den Zweig „ci-ergebnisse“ (DMG in Teilen, Bilder, Protokolle)
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      qa_model:
+        description: "Modell für den Selbsttest"
+        required: false
+        default: mlx-community/Qwen3-0.6B-4bit
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  APP_VERSION: "0.1.0"
+  HOMEBREW_NO_AUTO_UPDATE: "1"
+
+jobs:
+  build:
+    name: Tests, Build, Prüfung, DMG (macOS 26)
+    runs-on: macos-26
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Werkzeuge
+        run: |
+          mkdir -p logs
+          ls -d /Applications/Xcode*.app || true
+          X=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | grep -vi beta | sort -V | tail -1)
+          [ -z "$X" ] && X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -vi beta | sort -V | tail -1)
+          if [ -n "$X" ]; then sudo xcode-select -s "$X"; fi
+          {
+            sw_vers; uname -m; xcodebuild -version; swift --version; echo "SDK: $(xcrun --show-sdk-version)"
+            sysctl -n machdep.cpu.brand_string; sysctl -n hw.memsize
+          } 2>&1 | tee logs/werkzeuge.txt
+          xcodebuild -downloadComponent MetalToolchain 2>&1 | tail -3 || true
+          xcrun -f metal 2>&1 | tee -a logs/werkzeuge.txt || true
+          brew install xcodegen >/dev/null 2>&1 || true
+
+      - name: Kern-Tests (LokiCore)
+        id: tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee logs/kern-tests.txt
+
+      - name: App bauen
+        env:
+          VERSION: ${{ env.APP_VERSION }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          set -o pipefail
+          scripts/build.sh 2>&1 | tee logs/build.txt
+
+      - name: Vorschaubilder (Dunkel und Hell)
+        id: snapshots
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          scripts/run_qa.sh snapshot qa/vorschau 2>&1 | tee logs/vorschau.txt
+
+      - name: Selbsttest (Katalog, Download, MLX, Chat)
+        id: selftest
+        continue-on-error: true
+        timeout-minutes: 45
+        env:
+          QA_MODEL: ${{ inputs.qa_model || 'mlx-community/Qwen3-0.6B-4bit' }}
+        run: |
+          set -o pipefail
+          scripts/run_qa.sh selftest qa/selbsttest 2>&1 | tee logs/selbsttest.txt
+
+      - name: DMG erstellen und prüfen
+        env:
+          VERSION: ${{ env.APP_VERSION }}
+        run: |
+          set -o pipefail
+          scripts/make_dmg.sh 2>&1 | tee logs/dmg.txt
+
+      - name: Paketprüfung
+        if: always()
+        run: |
+          {
+            echo "== Ergebnisse =="
+            echo "Kern-Tests: ${{ steps.tests.outcome }}"
+            echo "Vorschaubilder: ${{ steps.snapshots.outcome }}"
+            echo "Selbsttest: ${{ steps.selftest.outcome }}"
+            echo "== lipo =="; lipo -info build/LOKI.app/Contents/MacOS/LOKI
+            echo "== minos/sdk =="; otool -l build/LOKI.app/Contents/MacOS/LOKI | grep -A4 LC_BUILD_VERSION | head -8
+            echo "== codesign =="; codesign -dvv build/LOKI.app 2>&1
+            echo "== Ressourcen =="; ls -la build/LOKI.app/Contents/Resources | head -40
+            echo "== Bundles =="; find build/LOKI.app -name "*.bundle" -maxdepth 4
+            echo "== metallib =="; find build/LOKI.app -name "*.metallib" -exec ls -la {} \;
+            echo "== Bibliotheken =="; otool -L build/LOKI.app/Contents/MacOS/LOKI
+            echo "== Größe =="; du -sh build/LOKI.app dist/*.dmg 2>/dev/null
+            echo "== Info.plist =="; plutil -p build/LOKI.app/Contents/Info.plist
+          } > logs/paket-pruefung.txt 2>&1 || true
+          cat logs/paket-pruefung.txt
+          cp build/xcodebuild.log logs/ 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LOKI-ergebnisse
+          path: |
+            dist/
+            logs/
+            qa/
+          if-no-files-found: ignore
+
+  results:
+    name: Ergebnisse sichern
+    if: always()
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: LOKI-ergebnisse
+          path: ergebnisse
+      - name: Bilder verkleinern, DMG teilen
+        run: |
+          python3 -m pip install --quiet --user --break-system-packages pillow
+          python3 - <<'PY'
+          import pathlib
+          from PIL import Image
+          for p in pathlib.Path("ergebnisse").rglob("*.png"):
+              im = Image.open(p).convert("RGB")
+              if im.width > 1800:
+                  im = im.resize((im.width // 2, im.height // 2), Image.LANCZOS)
+              im.save(p.with_suffix(".jpg"), quality=86, optimize=True)
+              p.unlink()
+          PY
+          for f in ergebnisse/dist/*.dmg; do
+            [ -f "$f" ] || continue
+            (cd "$(dirname "$f")" && split -b 40m -d "$(basename "$f")" "$(basename "$f").teil-" && rm "$(basename "$f")")
+          done
+          ls -laR ergebnisse | head -80
+      - name: In Zweig „ci-ergebnisse“ schreiben
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd ergebnisse
+          {
+            echo "Lauf: ${GITHUB_RUN_NUMBER} (${GITHUB_SHA})"
+            echo "build: ${{ needs.build.result }}"
+            date -u
+          } > ERGEBNIS.txt
+          git init -q -b ci-ergebnisse
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "CI-Ergebnisse Lauf ${GITHUB_RUN_NUMBER}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-ergebnisse

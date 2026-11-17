@@ -1,0 +1,30 @@
+LOKI 0.1 Vorschau – Installation
+================================
+
+Voraussetzungen
+- Mac mit Apple Silicon (M1 oder neuer), macOS 26 oder neuer
+- Empfohlen: 32 GB Arbeitsspeicher oder mehr, für große Modelle 64 GB
+- Für die Modelle: eine externe SSD (oder freier Platz auf der internen SSD)
+
+1. Installieren
+   „LOKI“ in den Ordner „Programme“ ziehen und die App ab jetzt von dort starten.
+
+2. Erster Start (einmalig)
+   LOKI ist noch nicht von Apple beglaubigt (notarisiert). macOS fragt deshalb beim ersten Start nach:
+   - LOKI einmal öffnen und im Hinweis auf „Fertig“ klicken.
+   - Systemeinstellungen → Datenschutz & Sicherheit → ganz unten bei „LOKI“ auf „Dennoch öffnen“ klicken.
+   - LOKI erneut öffnen und bestätigen.
+
+3. Erste Schritte in LOKI
+   - Bereich „Modelle“: Speicherort wählen – am besten deine externe SSD („Hier speichern“).
+   - Startmodell laden (Qwen3 4B, rund 2,3 GB). Danach antwortet LOKI ohne Internet.
+   - Im Chat „Auto“ lassen: LOKI wählt pro Anfrage das passende Modell und zeigt den Grund.
+     „Manuell“: dein gewähltes Modell gilt für den ganzen Chat.
+
+Datenschutz
+- Chats, Dateien und Antworten bleiben auf deinem Mac.
+- Internet wird nur für Modell-Downloads genutzt, die du selbst startest.
+- Keine Cloud, kein Abo, keine Telemetrie.
+
+Chats und Einstellungen liegen unter ~/Library/Application Support/LOKI.
+Modelle liegen im gewählten Speicherort im Unterordner „Modelle“.
